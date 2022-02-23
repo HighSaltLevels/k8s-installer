@@ -1,0 +1,88 @@
+---
+- name: Install vim
+  apt:
+    name: vim
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Set vim as default editor
+  command: update-alternatives --set editor /usr/bin/vim.basic
+  become: yes
+
+- name: Install docker 
+  apt:
+    name: docker.io
+    state: present
+  become: yes
+
+- name: Check if the host is a Raspberry Pi
+  stat:
+    path: /boot/firmware/cmdline.txt
+  register: is_pi
+
+- name: Enable cgroup support if host is a Raspberry Pi
+  template:
+    src: cmdline.txt.j2
+    dest: /boot/firmware/cmdline.txt
+  become: yes  
+  when: is_pi.stat.exists
+
+- name: Check if docker daemon config exists
+  stat:
+    path: /etc/docker/daemon.json
+  register: daemon_preconfigured
+
+- name: Set systemd as cgroup driver
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+  become: yes
+
+- name: Allow IPTables to see bridged traffic
+  template:
+    src: k8s.conf.j2
+    dest: /etc/sysctl.d/k8s.conf
+  become: yes
+
+- name: Restart if docker daemon was newly configured
+  reboot:
+    reboot_timeout: 600
+  become: yes
+  when: not daemon_preconfigured.stat.exists
+
+- name: Add google's gpg key
+  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+  become: yes
+
+- name: Add google's ppa
+  template:
+    src: kubernetes.list.j2
+    dest: /etc/apt/sources.list.d/kubernetes.list
+  become: yes
+
+- name: Install Kubernetes
+  apt:
+    pkg:
+    - kubeadm=1.22.2-00
+    - kubelet=1.22.2-00
+    - kubectl=1.22.2-00
+    update_cache: yes
+  become: yes
+
+- name: Pull control plane images
+  command: kubeadm config images pull
+  become: yes
+
+- name: Disable swap
+  command: swapoff -a
+  become: yes
+
+- name: Reset kubernetes
+  command: kubeadm reset --force
+  become: yes
+
+- name: Clear out /var/lib/kubelet
+  file:
+    path: /var/lib/kubelet/*
+    state: absent

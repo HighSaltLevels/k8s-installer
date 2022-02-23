@@ -1,0 +1,12 @@
+---
+- name: Create .kube directory
+  file: path=/home/swdrummer/.kube state=directory
+
+- name: Copy .kube/config
+  copy:
+    src: /home/swdrummer/.kube/config
+    dest: /home/swdrummer/.kube/config
+  
+- name: Join Cluster
+  command: kubeadm join --discovery-file /home/swdrummer/.kube/config
+  become: yes

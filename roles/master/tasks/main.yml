@@ -1,0 +1,33 @@
+---
+- name: Generate kubernetes token
+  command: kubeadm token generate
+  become: yes
+  register: token
+
+- name: Initialize Kubernetes
+  command: kubeadm init --token="{{ token.stdout_lines[0] }}" --kubernetes-version=v1.22.2 --pod-network-cidr=10.244.0.0/16
+  become: yes
+
+- name: Create ~/.kube directory
+  file:
+    path: /home/swdrummer/.kube
+    state: directory
+    mode: '0755'
+
+- name: Copy admin kubeconfig to ~/.kube
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/swdrummer/.kube/config
+    owner: swdrummer
+    group: swdrummer
+    remote_src: yes
+  become: yes
+
+- name: Retrieve ~/.kube/config file
+  fetch:
+    src: /home/swdrummer/.kube/config
+    dest: ~/.kube/config
+    flat: yes
+
+- name: Install flannel overlay network
+  shell: curl -sSL https://raw.githubusercontent.com/coreos/flannel/v0.14.0/Documentation/kube-flannel.yml | kubectl apply -f -
