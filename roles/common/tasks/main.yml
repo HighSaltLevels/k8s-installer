@@ -10,6 +10,12 @@
   command: update-alternatives --set editor /usr/bin/vim.basic
   become: yes
 
+- name: Install runc
+  apt:
+    name: runc
+    state: present
+  become: yes
+
 - name: Install docker 
   apt:
     name: docker.io
