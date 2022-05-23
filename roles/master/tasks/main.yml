@@ -5,7 +5,8 @@
   register: token
 
 - name: Initialize Kubernetes
-  command: kubeadm init --token="{{ token.stdout_lines[0] }}" --kubernetes-version=v1.22.2 --pod-network-cidr=10.244.0.0/16
+  # Ignore single core CPU check. OCI free tier does have its drawbacks
+  command: kubeadm init --token="{{ token.stdout_lines[0] }}" --kubernetes-version=v1.22.2 --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=NumCPU
   become: yes
 
 - name: Create ~/.kube directory
