@@ -1,4 +1,12 @@
 ---
+- name: Open kube API port
+  command: iptables -I INPUT -p tcp -m tcp --dport 6443 -j ACCEPT
+  become: yes
+
+- name: Save iptables configuration
+  command: iptables-save
+  become: yes
+
 - name: Generate kubernetes token
   command: kubeadm token generate
   become: yes
@@ -11,23 +19,23 @@
 
 - name: Create ~/.kube directory
   file:
-    path: /home/swdrummer/.kube
+    path: /home/ubuntu/.kube
     state: directory
     mode: '0755'
 
 - name: Copy admin kubeconfig to ~/.kube
   copy:
     src: /etc/kubernetes/admin.conf
-    dest: /home/swdrummer/.kube/config
-    owner: swdrummer
-    group: swdrummer
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
     remote_src: yes
   become: yes
 
 - name: Retrieve ~/.kube/config file
   fetch:
-    src: /home/swdrummer/.kube/config
-    dest: ~/.kube/config
+    src: /home/ubuntu/.kube/config
+    dest: /tmp/kube_config
     flat: yes
 
 - name: Install flannel overlay network

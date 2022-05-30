@@ -1,12 +1,12 @@
 ---
 - name: Create .kube directory
-  file: path=/home/swdrummer/.kube state=directory
+  file: path=/home/ubuntu/.kube state=directory
 
 - name: Copy .kube/config
   copy:
-    src: /home/swdrummer/.kube/config
-    dest: /home/swdrummer/.kube/config
+    src: /tmp/kube_config
+    dest: /home/ubuntu/.kube/config
   
 - name: Join Cluster
-  command: kubeadm join --discovery-file /home/swdrummer/.kube/config
+  command: kubeadm join --discovery-file /home/ubuntu/.kube/config
   become: yes
