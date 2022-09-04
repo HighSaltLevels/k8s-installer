@@ -80,8 +80,12 @@
   command: kubeadm config images pull
   become: yes
 
-- name: Disable swap
+- name: Disable swap for this session
   command: swapoff -a
+  become: yes
+
+- name: Disable swap permanently
+  command: sed -i "/\/swapfile/d" /etc/fstab
   become: yes
 
 - name: Reset kubernetes
