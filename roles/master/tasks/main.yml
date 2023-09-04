@@ -5,7 +5,7 @@
   register: token
 
 - name: Initialize Kubernetes
-  command: kubeadm init --token="{{ token.stdout_lines[0] }}" --kubernetes-version=v1.22.2 --pod-network-cidr=10.244.0.0/16
+  command: kubeadm init --token="{{ token.stdout_lines[0] }}" --kubernetes-version=v1.28.1 --pod-network-cidr=10.244.0.0/16
   become: yes
 
 - name: Create ~/.kube directory
@@ -30,4 +30,4 @@
     flat: yes
 
 - name: Install flannel overlay network
-  shell: curl -sSL https://raw.githubusercontent.com/coreos/flannel/v0.14.0/Documentation/kube-flannel.yml | kubectl apply -f -
+  shell: curl -sSL https://raw.githubusercontent.com/coreos/flannel/v0.22.2/Documentation/kube-flannel.yml | kubectl apply -f -

@@ -22,6 +22,14 @@
     state: present
   become: yes
 
+# Explicitly install containerd to pick up a newer version of the runtime.
+# This is required for newer versions of kubernetes.
+- name: Install containerd 
+  apt:
+    name: containerd
+    state: latest
+  become: yes
+
 - name: Check if the host is a Raspberry Pi
   stat:
     path: /boot/firmware/cmdline.txt
@@ -70,9 +78,9 @@
 - name: Install Kubernetes
   apt:
     pkg:
-    - kubeadm=1.22.2-00
-    - kubelet=1.22.2-00
-    - kubectl=1.22.2-00
+    - kubeadm=1.28.1-00
+    - kubelet=1.28.1-00
+    - kubectl=1.28.1-00
     update_cache: yes
   become: yes
 
@@ -96,3 +104,30 @@
   file:
     path: /var/lib/kubelet/*
     state: absent
+
+- name: Clear out /var/lib/cni
+  file:
+    path: /var/lib/cni/*
+    state: absent
+
+- name: Delete old cni interface
+  command: ip link delete cni0
+  become: yes
+  ignore_errors: true
+
+- name: Stop docker to kill any lingering containers
+  command: systemctl stop docker
+  become: yes
+
+- name: Start docker
+  command: systemctl start docker
+  become: yes
+
+- name: Reset iptables to default
+  shell: |
+    iptables -P INPUT ACCEPT
+    iptables -P OUTPUT ACCEPT
+    iptables -P FORWARD ACCEPT
+    iptables -F
+  become: yes
+
